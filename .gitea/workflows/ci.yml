@@ -1,0 +1,61 @@
+# Gitea Actions twin of .github/workflows/ci.yml.
+#
+# Gitea ignores .github/workflows/ once .gitea/workflows/ exists, so this file
+# is what runs there. Differences from the GitHub version:
+#   - actions are referenced by full URL, independent of DEFAULT_ACTIONS_URL
+#   - rustup is installed if the runner image doesn't have it
+# Keep RUST_VERSION and the steps in step with the GitHub workflow.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  # dist/ is committed, and the wasm bytes depend on the compiler version.
+  RUST_VERSION: "1.98.0"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: https://github.com/actions/checkout@v5
+
+      - uses: https://github.com/denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install Rust ${{ env.RUST_VERSION }} (wasm32)
+        run: |
+          if ! command -v rustup >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --profile minimal --default-toolchain none
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_VERSION"
+
+      - name: Build
+        run: deno task build
+
+      - name: dist/ is up to date
+        run: |
+          if ! git diff --quiet -- dist/ || [ -n "$(git ls-files --others --exclude-standard dist/)" ]; then
+            echo "::error::dist/ is out of date. Run 'deno task build' with Rust $RUST_VERSION and commit dist/."
+            git status --short -- dist/
+            git diff --stat -- dist/
+            exit 1
+          fi
+
+      - name: Format, lint, type-check
+        run: deno task check
+
+      - name: Rust unit tests
+        working-directory: wasm
+        run: cargo test
+
+      - name: Tests
+        run: deno test -A

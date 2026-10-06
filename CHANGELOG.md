@@ -9,6 +9,7 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - This changelog.
+- Gitea Actions workflow (`.gitea/workflows/ci.yml`) mirroring the GitHub CI.
 
 ## [0.1.0] - 2026-10-05
 
