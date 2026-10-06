@@ -125,3 +125,8 @@ Measured with `deno bench` on an i7-8700K, canvas calls stubbed out:
 
 In a real browser, canvas path drawing is shared by both versions and dominates each frame, so the
 end-to-end gain is smaller (about 1.2× in the in-page benchmark).
+
+## License
+
+MIT, see [LICENSE](LICENSE). Includes the original `spectrum.js` notice (© 2019 Jeppe
+Ledet-Pedersen, MIT).
