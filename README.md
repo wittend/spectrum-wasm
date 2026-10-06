@@ -70,6 +70,11 @@ deno task bench    # build, then benchmark original vs wasm
 deno task check    # fmt --check, lint (custom rules), type-check
 ```
 
+`dist/` is committed so the drop-in can be used without a Rust toolchain. After changing `src/` or
+`wasm/`, run `deno task build` and commit `dist/` too. CI fails if it is stale. The wasm bytes
+depend on the Rust version, and CI pins `RUST_VERSION` in `.github/workflows/ci.yml` (currently
+1.98.0); bump it there when you upgrade Rust locally.
+
 Server environment variables: `PORT` (default 8000) and `HOSTNAME` (default `0.0.0.0`, so other
 machines on the network can reach it). Every response sends `Access-Control-Allow-Origin: *` and
 `Cross-Origin-Resource-Policy: cross-origin`.

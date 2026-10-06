@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  # dist/ is committed, and the wasm bytes depend on the compiler version.
+  # Keep this in step with the toolchain used to build the committed dist/.
+  RUST_VERSION: "1.98.0"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Install Rust ${{ env.RUST_VERSION }} (wasm32)
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target wasm32-unknown-unknown
+          rustup default "$RUST_VERSION"
+
+      - name: Build
+        run: deno task build
+
+      - name: dist/ is up to date
+        run: |
+          if ! git diff --quiet -- dist/ || [ -n "$(git ls-files --others --exclude-standard dist/)" ]; then
+            echo "::error::dist/ is out of date. Run 'deno task build' with Rust $RUST_VERSION and commit dist/."
+            git status --short -- dist/
+            git diff --stat -- dist/
+            exit 1
+          fi
+
+      - name: Format, lint, type-check
+        run: deno task check
+
+      - name: Rust unit tests
+        working-directory: wasm
+        run: cargo test
+
+      - name: Tests
+        run: deno test -A
