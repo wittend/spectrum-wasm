@@ -10,6 +10,10 @@ All notable changes to this project are documented here. The format is based on
 
 - This changelog.
 - Gitea Actions workflow (`.gitea/workflows/ci.yml`) mirroring the GitHub CI.
+- Self-hosted Gitea Actions runner for that workflow: `gitea/act_runner` in Docker, serving the
+  `ubuntu-latest` label with the `docker.gitea.com/runner-images:ubuntu-latest` image. Its
+  registration is kept in the named volume `gitea-runner-data`, so the container can be recreated or
+  updated without registering again.
 
 ## [0.1.0] - 2026-10-05
 
