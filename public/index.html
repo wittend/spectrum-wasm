@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Spectrum WASM</title>
+    <link rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23111'/%3E%3Cpath d='M1 12 4 9 6 11 8 3 10 10 12 7 15 12' fill='none' stroke='%2338bdf8' stroke-width='1.5'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="app.css" />
+    <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try {
+      var t = localStorage.getItem("spectrum-wasm.theme");
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (_) {}
+    </script>
+    <script src="colormaps.js"></script>
+    <script type="module" src="app.js"></script>
+  </head>
+  <body>
+    <div id="app" class="app" data-state="normal" role="application"
+      aria-label="Spectrum WASM test interface">
+      <header class="titlebar" id="titlebar">
+        <svg class="app-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M1 12 4 9 6 11 8 3 10 10 12 7 15 12" />
+        </svg>
+        <span class="app-title">Spectrum WASM</span>
+        <span class="doc-title" id="doc-title">untitled.spectrum.json</span>
+        <div class="win-controls">
+          <button type="button" class="win-btn" data-cmd="win.minimize"
+            title="Minimize (Ctrl+Shift+M)" aria-label="Minimize">
+            <svg viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M2 9h8" />
+            </svg>
+          </button>
+          <button type="button" class="win-btn" data-cmd="win.fit" id="btn-fit"
+            title="Fit to screen (Ctrl+Shift+F)" aria-label="Fit to screen">
+            <svg viewBox="0 0 12 12" aria-hidden="true" class="ico-fit">
+              <rect x="2" y="2" width="8" height="8" />
+            </svg>
+            <svg viewBox="0 0 12 12" aria-hidden="true" class="ico-restore">
+              <rect x="2" y="4" width="6" height="6" />
+              <path d="M4 4V2h6v6H8" />
+            </svg>
+          </button>
+          <button type="button" class="win-btn" data-cmd="win.hide" title="Hide (Ctrl+Shift+H)"
+            aria-label="Hide">
+            <svg viewBox="0 0 12 12" aria-hidden="true">
+              <path d="M3 3l6 6M9 3 3 9" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <nav class="menubar" id="menubar" role="menubar" aria-label="Main menu">
+        <div class="menu">
+          <button type="button" class="menu-btn" role="menuitem" aria-haspopup="true"
+            aria-expanded="false"><u>F</u>ile</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem"
+              data-cmd="file.new">New<kbd>Ctrl+Alt+N</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="file.open">Open…<kbd>Ctrl+O</kbd></button>
+            <hr />
+            <button type="button" role="menuitem"
+              data-cmd="file.save">Save<kbd>Ctrl+S</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="file.saveAs">Save As…<kbd>Ctrl+Shift+S</kbd></button>
+            <hr />
+            <button type="button" role="menuitem" data-cmd="file.exportPng">Export Image…</button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" role="menuitem" aria-haspopup="true"
+            aria-expanded="false"><u>E</u>dit</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem"
+              data-cmd="edit.copyImage">Copy Image<kbd>Ctrl+Shift+C</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="edit.copySession">Copy Session JSON</button>
+            <hr />
+            <button type="button" role="menuitem" data-cmd="edit.resetRange">Reset Range</button>
+            <button type="button" role="menuitem"
+              data-cmd="edit.clearHolds">Clear Max/Min Hold</button>
+            <hr />
+            <button type="button" role="menuitem"
+              data-cmd="edit.preferences">Preferences…<kbd>Ctrl+,</kbd></button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" role="menuitem" aria-haspopup="true"
+            aria-expanded="false"><u>T</u>ools</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem"
+              data-cmd="tools.pause">Pause / Run<kbd>Space</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="tools.maxHold">Max Hold<kbd>M</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="tools.autoscale">Autoscale<kbd>A</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="tools.colormap">Next Colormap<kbd>C</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="tools.fullscreen">Canvas Fullscreen<kbd>F</kbd></button>
+            <hr />
+            <div class="menu-label">Implementation</div>
+            <button type="button" role="menuitemradio" data-cmd="impl.wasm"
+              aria-checked="true">WebAssembly (spectrum-wasm)</button>
+            <button type="button" role="menuitemradio" data-cmd="impl.original"
+              aria-checked="false">Original JavaScript</button>
+            <button type="button" role="menuitem" data-cmd="tools.benchmark">Benchmark…</button>
+            <hr />
+            <div class="menu-label">Theme</div>
+            <button type="button" role="menuitemradio" data-cmd="theme.light"
+              aria-checked="false">Light</button>
+            <button type="button" role="menuitemradio" data-cmd="theme.dark"
+              aria-checked="false">Dark</button>
+            <button type="button" role="menuitemradio" data-cmd="theme.system"
+              aria-checked="true">Match System</button>
+            <hr />
+            <div class="menu-label">Window</div>
+            <button type="button" role="menuitem"
+              data-cmd="win.fit">Fit to Screen<kbd>Ctrl+Shift+F</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="win.minimize">Minimize<kbd>Ctrl+Shift+M</kbd></button>
+            <button type="button" role="menuitem"
+              data-cmd="win.hide">Hide<kbd>Ctrl+Shift+H</kbd></button>
+            <hr />
+            <div class="menu-label">Bars</div>
+            <button type="button" role="menuitemcheckbox" data-cmd="view.toolbar"
+              aria-checked="true">Toolbar</button>
+            <button type="button" role="menuitemcheckbox" data-cmd="view.statusbar"
+              aria-checked="true">Status Bar</button>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" class="menu-btn" role="menuitem" aria-haspopup="true"
+            aria-expanded="false"><u>H</u>elp</button>
+          <div class="menu-pop" role="menu">
+            <button type="button" role="menuitem"
+              data-cmd="help.shortcuts">Keyboard Shortcuts<kbd>?</kbd></button>
+            <button type="button" role="menuitem" data-cmd="help.embed">Embedding Guide</button>
+            <hr />
+            <button type="button" role="menuitem" data-cmd="help.about">About Spectrum WASM</button>
+          </div>
+        </div>
+        <div class="menubar-spacer"></div>
+        <button type="button" class="theme-toggle" data-cmd="theme.cycle" id="theme-toggle"
+          title="Theme: Match System" aria-label="Cycle theme">
+          <svg viewBox="0 0 16 16" aria-hidden="true" class="ico-light">
+            <circle cx="8" cy="8" r="3" />
+            <path
+              d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6 13 13M3 13l1.4-1.4M11.6 4.4 13 3" />
+          </svg>
+          <svg viewBox="0 0 16 16" aria-hidden="true" class="ico-dark">
+            <path d="M13 10A6 6 0 0 1 6 3a6 6 0 1 0 7 7z" />
+          </svg>
+          <svg viewBox="0 0 16 16" aria-hidden="true" class="ico-system">
+            <rect x="1.5" y="2.5" width="13" height="9" rx="1" />
+            <path d="M5 14h6" />
+          </svg>
+        </button>
+      </nav>
+
+      <div class="toolbar" id="toolbar" role="toolbar" aria-label="Toolbar">
+        <div class="tb-group">
+          <button type="button" class="tb-btn" data-cmd="file.new" title="New session (Ctrl+Alt+N)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M4 1.5h5l3 3v10H4z" />
+              <path d="M9 1.5v3h3" />
+            </svg>
+            <span>New</span>
+          </button>
+          <button type="button" class="tb-btn" data-cmd="file.save" title="Save session (Ctrl+S)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.5 2.5h9l2 2v9h-11z" />
+              <path d="M5 2.5v3h5v-3M5 13.5v-4h6v4" />
+            </svg>
+            <span>Save</span>
+          </button>
+          <button type="button" class="tb-btn" data-cmd="file.saveAs"
+            title="Save session as… (Ctrl+Shift+S)">
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2.5 2.5h7l2 2v3" />
+              <path d="M2.5 2.5v11h5" />
+              <path d="M10 14.5l4-4-1.5-1.5-4 4v1.5z" />
+            </svg>
+            <span>Save As</span>
+          </button>
+        </div>
+        <div class="tb-sep" role="separator"></div>
+        <div class="tb-group">
+          <button type="button" class="tb-btn" id="pause" data-cmd="tools.pause"
+            title="Pause / Run (Space)">Pause</button>
+          <button type="button" class="tb-btn" id="max_hold" data-cmd="tools.maxHold"
+            title="Max hold (M)">Max hold</button>
+          <button type="button" class="tb-btn" data-cmd="tools.autoscale"
+            title="Autoscale (A)">Autoscale</button>
+        </div>
+        <div class="tb-sep" role="separator"></div>
+        <div class="tb-group">
+          <label class="tb-field">Colormap
+            <select id="colormap" aria-label="Colormap"></select>
+          </label>
+        </div>
+        <div class="tb-sep" role="separator"></div>
+        <div class="tb-group tb-checks">
+          <label><input type="checkbox" id="check_live" checked /> Live</label>
+          <label><input type="checkbox" id="check_max" checked /> Max</label>
+          <label><input type="checkbox" id="check_min" checked /> Min</label>
+          <label><input type="checkbox" id="cursor" /> Cursor</label>
+          <label class="tb-field">Step
+            <input type="number" id="step" value="1000" step="100" min="1" aria-label="Cursor step (Hz)" />
+          </label>
+        </div>
+      </div>
+
+      <main class="viewport" id="viewport">
+        <canvas id="waterfall" tabindex="0" aria-label="Spectrum and waterfall display"></canvas>
+        <div class="viewport-msg" id="viewport-msg" hidden></div>
+      </main>
+
+      <footer class="statusbar" id="statusbar" role="status" aria-live="polite">
+        <span class="sb-item sb-impl" id="sb-impl" title="Active implementation">WASM</span>
+        <span class="sb-item" id="sb-run">Running</span>
+        <span class="sb-item" id="sb-fps" title="Frames per second">— fps</span>
+        <span class="sb-item" id="sb-frame" title="Mean addData() time">—</span>
+        <span class="sb-item" id="sb-freq" title="Center / span">—</span>
+        <span class="sb-item" id="sb-range" title="Spectrum range">—</span>
+        <span class="sb-item" id="sb-mode" title="Averaging / hold">—</span>
+        <span class="sb-item sb-msg" id="sb-msg"></span>
+        <span class="sb-item" id="sb-cursor" title="Pointer frequency">—</span>
+      </footer>
+    </div>
+
+    <button type="button" id="show-pill" class="show-pill" data-cmd="win.show" hidden
+      title="Show (Ctrl+Shift+H)">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 12 4 9 6 11 8 3 10 10 12 7 15 12" /></svg>
+      Show Spectrum
+    </button>
+
+    <dialog id="dialog" class="dialog">
+      <form method="dialog" class="dialog-form">
+        <header class="dialog-head">
+          <h2 id="dialog-title">Dialog</h2>
+        </header>
+        <div class="dialog-body" id="dialog-body"></div>
+        <footer class="dialog-foot" id="dialog-foot"></footer>
+      </form>
+    </dialog>
+
+    <div id="bench-stage" class="bench-stage" aria-hidden="true"></div>
+    <input type="file" id="file-input" accept=".json,application/json" hidden />
+  </body>
+</html>

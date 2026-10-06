@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spectrum Embed Example</title>
+    <!--
+      Minimal drop-in example: the same markup a host app (e.g. ka9q-web) uses
+      with the original spectrum.js. Only the <script src> changed.
+
+      Load from another host with ?src=https://host:8000/dist/spectrum.js
+    -->
+    <style>
+    :root {
+      --bg: #f4f6f9;
+      --text: #1b2330;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --text: #e3e8ef;
+        color-scheme: dark;
+      }
+    }
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px system-ui, sans-serif;
+    }
+    #waterfall {
+      width: 100%;
+      height: 60vh;
+      display: block;
+      background: #000;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      align-items: center;
+      margin: 10px 0;
+    }
+    </style>
+  </head>
+  <body>
+    <h1 style="font-size: 18px; margin: 0 0 8px">spectrum-wasm embed example</h1>
+    <canvas id="waterfall"></canvas>
+    <div class="controls">
+      <button id="pause">Pause</button>
+      <button id="max_hold">Max hold</button>
+      <select id="colormap"></select>
+      <label><input type="checkbox" id="check_live" checked /> Live</label>
+      <label><input type="checkbox" id="check_max" checked /> Max</label>
+      <label><input type="checkbox" id="check_min" checked /> Min</label>
+      <label><input type="checkbox" id="cursor" /> Cursor</label>
+      <label>Step <input id="step" type="number" value="1000" style="width: 90px" /></label>
+      <span id="info"></span>
+    </div>
+
+    <script>
+    // Pick the component source: ?src= for cross-host testing.
+    (function () {
+      var src = new URLSearchParams(location.search).get("src") || "dist/spectrum.js";
+      var base = src.replace(/spectrum\.js(\?.*)?$/, "");
+      document.write('<script src="' + base + 'colormaps.js"><\/script>');
+      document.write('<script src="' + src + '"><\/script>');
+    })();
+    </script>
+    <script>
+    // ---- unchanged host code, as it would be written for the original ----
+    Spectrum.ready.then(function () {
+      var bins = 2048;
+      var spectrum = new Spectrum("waterfall", {
+        centerHz: 7100000,
+        spanHz: bins * 200,
+        bins: bins,
+        averaging: 2,
+      });
+      spectrum.setLowHz(7000000);
+      spectrum.setHighHz(7300000);
+      spectrum.setFrequency(7074000);
+      spectrum.setFilter(0, 3000);
+
+      var sel = document.getElementById("colormap");
+      colormaps.forEach(function (_, i) {
+        sel.add(new Option((window.colormapNames || [])[i] || "Map " + i, i));
+      });
+      sel.onchange = function () {
+        spectrum.setColormap(+sel.value);
+      };
+      document.getElementById("pause").onclick = function () {
+        spectrum.togglePaused();
+      };
+      document.getElementById("max_hold").onclick = function () {
+        spectrum.toggleMaxHold();
+      };
+      document.getElementById("cursor").onchange = function () {
+        spectrum.cursorCheck();
+      };
+      window.addEventListener("keydown", function (e) {
+        if (e.target.tagName !== "INPUT") spectrum.onKeypress(e);
+      });
+
+      var t = 0;
+      setInterval(function () {
+        var data = new Float32Array(bins);
+        for (var i = 0; i < bins; i++) {
+          data[i] = -105 + Math.random() * 8;
+          var d = i - (bins * 0.37 + Math.sin(t / 40) * 30);
+          data[i] = Math.max(data[i], -40 - d * d / 4);
+          var d2 = i - bins * 0.7;
+          data[i] = Math.max(data[i], -60 - d2 * d2 / 60);
+        }
+        t++;
+        spectrum.addData(data);
+        // spectrum.js only knows nbins once data arrives, and the frequency
+        // axis depends on it (true of the original too): redraw it once.
+        if (t === 1) spectrum.updateAxes();
+      }, 33);
+
+      document.getElementById("info").textContent = "Spectrum " + Spectrum.implementation + " v" +
+        Spectrum.version;
+    });
+    </script>
+  </body>
+</html>
