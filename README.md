@@ -74,12 +74,47 @@ deno task check    # fmt --check, lint (custom rules), type-check
 
 `dist/` is committed so the drop-in can be used without a Rust toolchain. After changing `src/` or
 `wasm/`, run `deno task build` and commit `dist/` too. CI fails if it is stale. The wasm bytes
-depend on the Rust version, and CI pins `RUST_VERSION` in `.github/workflows/ci.yml` (currently
-1.98.0); bump it there when you upgrade Rust locally.
+depend on the Rust version, and CI pins `RUST_VERSION` (currently 1.98.0); see [CI](#ci).
 
 Server environment variables: `PORT` (default 8000) and `HOSTNAME` (default `0.0.0.0`, so other
 machines on the network can reach it). Every response sends `Access-Control-Allow-Origin: *` and
 `Cross-Origin-Resource-Policy: cross-origin`.
+
+## CI
+
+The same checks run on GitHub Actions (`.github/workflows/ci.yml`) and Gitea Actions
+(`.gitea/workflows/ci.yml`). Each rebuilds `dist/` and fails if it differs from the committed
+copy, then runs fmt, lint, type-check, `cargo test` and the Deno tests. Gitea ignores
+`.github/workflows/` once `.gitea/workflows/` exists, so keep the two files in step. When you
+upgrade Rust locally, bump `RUST_VERSION` in both and commit the rebuilt `dist/` in the same change.
+
+### Gitea runner
+
+The Gitea workflow needs a runner serving the `ubuntu-latest` label. These commands run
+`gitea/act_runner` in Docker, with its registration kept in the named volume `gitea-runner-data`.
+Set your Gitea address first:
+
+```bash
+export GITEA_URL=http://your-gitea-host:3000
+```
+
+To register for the first time, get a token from Gitea under **Settings → Actions → Runners → Create
+new runner**. It is a runner registration token, not an API token. Run this in an interactive
+terminal; it prompts for the token without echoing it:
+
+```bash
+test -n "${GITEA_URL:-}" || { echo "set GITEA_URL first"; false; } && read -rsp "Runner registration token: " t && echo && docker run -d --name gitea-runner --restart unless-stopped -e GITEA_INSTANCE_URL="$GITEA_URL" -e GITEA_RUNNER_REGISTRATION_TOKEN="$t" -e GITEA_RUNNER_LABELS=ubuntu-latest:docker://docker.gitea.com/runner-images:ubuntu-latest -v gitea-runner-data:/data -v /var/run/docker.sock:/var/run/docker.sock gitea/act_runner:latest; unset t
+```
+
+To update or recreate the runner, use this. It reuses the saved registration and needs no token,
+and running it once after registering also removes the token from the container's configuration:
+
+```bash
+test -n "${GITEA_URL:-}" || { echo "set GITEA_URL first"; false; } && docker pull gitea/act_runner:latest && docker rm -f gitea-runner && docker run -d --name gitea-runner --restart unless-stopped -e GITEA_INSTANCE_URL="$GITEA_URL" -e GITEA_RUNNER_LABELS=ubuntu-latest:docker://docker.gitea.com/runner-images:ubuntu-latest -v gitea-runner-data:/data -v /var/run/docker.sock:/var/run/docker.sock gitea/act_runner:latest
+```
+
+Check it with `docker logs gitea-runner`; look for "Runner registered successfully" or
+"declare successfully".
 
 ## Test interface
 
