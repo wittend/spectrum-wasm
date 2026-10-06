@@ -1,5 +1,7 @@
 # spectrum-wasm
 
+[![CI](https://github.com/wittend/spectrum-wasm/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wittend/spectrum-wasm/actions/workflows/ci.yml)
+
 A WebAssembly drop-in replacement for `spectrum.js` (© 2019 Jeppe Ledet-Pedersen, MIT), the
 spectrum + waterfall canvas display used by ka9q-web and similar SDR front ends.
 
