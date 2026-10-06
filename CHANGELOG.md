@@ -6,14 +6,20 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-05
+
+Project infrastructure and documentation only. The component's behaviour is unchanged from 0.1.0;
+`Spectrum.version` now reports `0.1.1`.
+
 ### Added
 
-- This changelog.
+- `CHANGELOG.md`.
 - Gitea Actions workflow (`.gitea/workflows/ci.yml`) mirroring the GitHub CI.
 - Self-hosted Gitea Actions runner for that workflow: `gitea/act_runner` in Docker, serving the
   `ubuntu-latest` label with the `docker.gitea.com/runner-images:ubuntu-latest` image. Its
   registration is kept in the named volume `gitea-runner-data`, so the container can be recreated or
   updated without registering again.
+- README section on CI, with commands to register and update the Gitea runner.
 
 ## [0.1.0] - 2026-10-05
 
@@ -58,5 +64,6 @@ Deliberate differences from the original `spectrum.js`:
   work in `addData` is 1.4–1.6× faster (`deno bench`, canvas stubbed). End to end in a browser,
   where canvas drawing dominates, about 1.2× faster.
 
-[Unreleased]: https://github.com/wittend/spectrum-wasm/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wittend/spectrum-wasm/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/wittend/spectrum-wasm/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wittend/spectrum-wasm/releases/tag/v0.1.0
